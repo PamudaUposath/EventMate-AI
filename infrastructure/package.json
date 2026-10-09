@@ -1,0 +1,24 @@
+{
+  "name": "eventmate-ai-infrastructure",
+  "version": "1.0.0",
+  "description": "AWS CDK Infrastructure for EventMate AI",
+  "bin": {
+    "eventmate-ai-infra": "bin/infrastructure.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.179.0",
+    "constructs": "^10.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.8",
+    "aws-cdk": "^2.179.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

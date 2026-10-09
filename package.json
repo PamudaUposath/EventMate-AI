@@ -1,0 +1,35 @@
+{
+  "name": "eventmate-ai-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventMate AI - Intelligent AI Event Planning Agent Powered by AWS",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "infrastructure"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "build:all": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm --workspace=backend run test",
+    "test:frontend": "npm --workspace=frontend run test",
+    "dev:backend": "npm --workspace=backend run dev",
+    "dev:frontend": "npm --workspace=frontend run dev"
+  },
+  "overrides": {
+    "tinypool": "^2.1.2",
+    "postcss-selector-parser": "^7.1.6"
+  },
+  "keywords": [
+    "aws",
+    "amazon-bedrock",
+    "nova-lite",
+    "ai-agent",
+    "dynamodb",
+    "event-planning",
+    "plan-rescue"
+  ],
+  "author": "EventMate AI Team",
+  "license": "MIT"
+}
