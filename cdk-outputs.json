@@ -1,0 +1,8 @@
+{
+  "EventMateAiStack": {
+    "UserPoolClientId": "66s3ggaiueebp56mbpu345usf5",
+    "UserPoolId": "us-east-1_cWMH6H7IY",
+    "Region": "us-east-1",
+    "ApiEndpoint": "https://5zbjhov2p7.execute-api.us-east-1.amazonaws.com"
+  }
+}

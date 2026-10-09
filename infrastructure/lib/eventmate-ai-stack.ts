@@ -101,6 +101,7 @@ export class EventMateAiStack extends cdk.Stack {
         COGNITO_USER_POOL_ID: userPool.userPoolId,
         COGNITO_CLIENT_ID: userPoolClient.userPoolClientId,
         BEDROCK_MODEL_ID: 'amazon.nova-lite-v1:0',
+        NODE_ENV: 'production',
       },
     });
 
@@ -110,17 +111,25 @@ export class EventMateAiStack extends cdk.Stack {
     conversationsTable.grantReadWriteData(backendLambda);
     rescueProposalsTable.grantReadWriteData(backendLambda);
 
-    // Bedrock permissions for Nova Lite foundation model (Least privilege: exact model ARN only)
+    // Bedrock permissions for Nova Lite foundation model & inference profiles
     backendLambda.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
         resources: [
           `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-lite-v1:0`,
+          `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/us.amazon.nova-lite-v1:0`,
+          `arn:aws:bedrock:${this.region}::inference-profile/us.amazon.nova-lite-v1:0`,
         ],
       })
     );
 
     // 4. API Gateway HTTP API
+    const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
+    const configuredOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+      : [];
+    const allowedOrigins = Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
+
     const httpApi = new apigwv2.HttpApi(this, 'EventMateHttpApi', {
       apiName: 'EventMate AI API',
       corsPreflight: {
@@ -132,9 +141,7 @@ export class EventMateAiStack extends cdk.Stack {
           apigwv2.CorsHttpMethod.DELETE,
           apigwv2.CorsHttpMethod.OPTIONS,
         ],
-        allowOrigins: process.env.ALLOWED_ORIGINS
-          ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-          : ['*'],
+        allowOrigins: allowedOrigins,
         maxAge: cdk.Duration.days(1),
       },
     });

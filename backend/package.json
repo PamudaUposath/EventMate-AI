@@ -4,7 +4,7 @@
   "description": "EventMate AI Backend powered by AWS Lambda, Amazon Bedrock, DynamoDB, and Cognito",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && esbuild src/handlers/lambda.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/handlers/lambda.js",
     "dev": "tsx watch src/local-server.ts",
     "start": "node dist/local-server.js",
     "test": "vitest run",
