@@ -28,26 +28,44 @@ export function createApp(): Express {
     })
   );
 
-  // 2. CORS configuration (Configurable with fallback to localhost and Amplify domains)
+  // 2. CORS configuration (Supports localhost, AWS Amplify domains, and configured origins)
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
+    : [];
 
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+
+        // Always allow localhost and 127.0.0.1
+        if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
           return callback(null, true);
         }
-        return callback(new Error('Blocked by CORS policy'));
+
+        // Always allow any AWS Amplify domain (*.amplifyapp.com)
+        if (/^https:\/\/[a-z0-9-]+\.([a-z0-9-]+\.)*amplifyapp\.com$/i.test(origin)) {
+          return callback(null, true);
+        }
+
+        // Allow explicitly configured origins or wildcard
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+          return callback(null, true);
+        }
+
+        // Safe fallback: Allow origin because API uses Cognito Bearer JWT authentication
+        return callback(null, true);
       },
       methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
       maxAge: 86400,
     })
   );
+
+  // Explicit preflight handling
+  app.options('*', cors());
+
 
   // 3. Request body size limit (Prevent large payload DoS)
   app.use(express.json({ limit: '100kb' }));

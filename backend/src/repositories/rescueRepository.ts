@@ -87,6 +87,12 @@ export const rescueRepository = {
         new PutCommand({
           TableName: TABLE_NAMES.RESCUE_PROPOSALS,
           Item: updated,
+          ConditionExpression: 'approvalStatus = :pending AND ownerId = :ownerId AND eventId = :eventId',
+          ExpressionAttributeValues: {
+            ':pending': 'pending',
+            ':ownerId': ownerId,
+            ':eventId': eventId,
+          },
         })
       );
       return updated;

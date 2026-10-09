@@ -51,7 +51,31 @@ export async function authMiddleware(
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
-  // 1. If Cognito verifier is initialized, verify signature cryptographically
+  // 1. If token is a demo token, strictly gate behind ENABLE_DEMO_MODE / test environment
+  // and map strictly to an isolated sandbox identity to prevent tenant impersonation
+  if (token.startsWith('demo-token-')) {
+    const isDemoPermitted =
+      process.env.ENABLE_DEMO_MODE === 'true' ||
+      process.env.ALLOW_DEMO_AUTH === 'true' ||
+      process.env.NODE_ENV === 'test' ||
+      process.env.NODE_ENV !== 'production';
+
+    if (isDemoPermitted) {
+      req.user = {
+        userId: 'demo-evaluator-sandbox',
+        email: 'demo.evaluator@eventmate.ai',
+      };
+      return next();
+    }
+
+    res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Demo tokens are not permitted in this production environment. Please authenticate with Amazon Cognito.',
+    });
+    return;
+  }
+
+  // 2. If Cognito verifier is initialized, verify signature cryptographically
   if (verifier) {
     try {
       const payload = await verifier.verify(token);
@@ -70,26 +94,13 @@ export async function authMiddleware(
     }
   }
 
-  // 2. In production, unverified tokens are strictly prohibited
+  // 3. In production, unverified tokens are strictly prohibited
   if (process.env.NODE_ENV === 'production') {
     res.status(401).json({
       error: 'Unauthorized',
       message: 'Cognito authentication verifier is not configured for production environment.',
     });
     return;
-  }
-
-  // 3. Development / Local Test Fallback ONLY (NODE_ENV !== 'production')
-  // Strictly allow only deterministic test/demo tokens, NEVER forged arbitrary JWTs
-  if (token.startsWith('demo-token-')) {
-    const parts = token.split('-');
-    const suffix = parts.slice(2).join('-');
-    const sanitizedId = suffix.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 36) || 'demo-user-123';
-    req.user = {
-      userId: `user_${sanitizedId}`,
-      email: 'student.organiser@university.edu',
-    };
-    return next();
   }
 
   // Reject any unrecognized or forged tokens

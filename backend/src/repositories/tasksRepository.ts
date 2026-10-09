@@ -168,6 +168,11 @@ export const tasksRepository = {
         new PutCommand({
           TableName: TABLE_NAMES.TASKS,
           Item: updated,
+          ConditionExpression: 'ownerId = :ownerId AND eventId = :eventId',
+          ExpressionAttributeValues: {
+            ':ownerId': ownerId,
+            ':eventId': eventId,
+          },
         })
       );
       return updated;
@@ -196,6 +201,11 @@ export const tasksRepository = {
         new DeleteCommand({
           TableName: TABLE_NAMES.TASKS,
           Key: { taskId },
+          ConditionExpression: 'ownerId = :ownerId AND eventId = :eventId',
+          ExpressionAttributeValues: {
+            ':ownerId': ownerId,
+            ':eventId': eventId,
+          },
         })
       );
     } catch (err: any) {
